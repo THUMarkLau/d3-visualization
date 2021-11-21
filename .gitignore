@@ -1,0 +1,4 @@
+.idea/*
+.vscode/*
+./data/.ipynb_checkpoints/*
+./data/data.js
