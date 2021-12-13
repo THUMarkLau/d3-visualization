@@ -1,7 +1,9 @@
 import numpy as np
 import json
 
-data = np.load("../features_cub/relationship.npy")
+data = np.load("../features_cub/relationship_simple.npy")
+print(data.shape)
+print(1)
 list_data = data.tolist()
 
 # left_size = len(list_data)

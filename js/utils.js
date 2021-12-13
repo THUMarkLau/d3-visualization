@@ -4,7 +4,7 @@
     var b=30, bb=150, height=600, buffMargin=1, minHeight=14;
     var c1=[-130, 40], c2=[-50, 100], c3=[-10, 140]; //Column positions of labels.
     var colors =["#3366FF", "#DC39FF",  "#FF9900","#109618", "#990099", "#0099C6"];
-
+    var dataDir = "file://D://Workspace//Datavisualize//大作业//data/";
     // 这个函数负责建立数据之间的关系
     bP.partData = function(data,p){
         var sData={};
@@ -67,6 +67,7 @@
             return ret;
         }
 
+        // mainBars 是外壳，subBars 是内核
         vis.mainBars = [
             calculatePosition( data.data[0].map(function(d){ return d3.sum(d);}), 0, height, buffMargin, minHeight),
             calculatePosition( data.data[1].map(function(d){ return d3.sum(d);}), 0, height, buffMargin, minHeight)
@@ -119,20 +120,30 @@
 
         var mainbar = d3.select("#"+id).select(".part"+p).select(".mainbars")
             .selectAll(".mainbar").data(data.mainBars[p])
-            .enter().append("g").attr("class","mainbar");
+            .enter().append("g").attr("class","mainbar").attr("id", function(d, i){return (p === 0 ? "left" : "right") + i});
 
         mainbar.append("rect").attr("class","mainrect")
-            .attr("x", 0).attr("y",function(d){ return d.middle-d.height/2; })
-            .attr("width",b).attr("height",function(d){ return d.height; })
+            // 位置
+            .attr("x", 0)
+            .attr("y",function(d){ return d.middle-d.height/2; })
+            // 大小
+            .attr("width",b)
+            .attr("height",function(d){ return d.height; })
+            // 抗锯齿
             .style("shape-rendering","auto")
-            .style("fill-opacity",0).style("stroke-width","0.5")
+            // 不透明度
+            .style("fill-opacity",0)
+            // 选中时的方框
+            .style("stroke-width","0.5")
             .style("stroke","black").style("stroke-opacity",0);
 
+        // channel 行的文字
         mainbar.append("text").attr("class","barlabel")
             .attr("x", c1[p]).attr("y",function(d){ return d.middle+5;})
             .text(function(d,i){ return data.keys[p][i];})
             .attr("text-anchor","start" );
 
+        // count 行的文字
         mainbar.append("text").attr("class","barvalue")
             .attr("x", c2[p]).attr("y",function(d){ return d.middle+5;})
             .text(function(d,i){
@@ -145,16 +156,25 @@
             })
             .attr("text-anchor","end");
 
+        // count 行的百分比
         mainbar.append("text").attr("class","barpercent")
             .attr("x", c3[p]).attr("y",function(d){ return d.middle+5;})
             .text(function(d,i){ return "( "+Math.round(100*d.percent)+"%)" ;})
             .attr("text-anchor","end").style("fill","grey");
 
-        d3.select("#"+id).select(".part"+p).select(".subbars")
-            .selectAll(".subbar").data(data.subBars[p]).enter()
-            .append("rect").attr("class","subbar")
-            .attr("x", 0).attr("y",function(d){ return d.y})
-            .attr("width",b).attr("height",function(d){ return d.h})
+        // 填充 subBarxz
+        d3.select("#"+id)
+            .select(".part"+p)
+            .select(".subbars")
+            .selectAll(".subbar")
+            .data(data.subBars[p])
+            .enter()
+            .append("rect")
+            .attr("class","subbar")
+            .attr("x", 0)
+            .attr("y",function(d){ return d.y})
+            .attr("width",b)
+            .attr("height",function(d){ return d.h})
             .style("fill",function(d){ return colors[d.key1];});
     }
 
@@ -218,7 +238,8 @@
         d3.select("#"+id).select(".part"+p).select(".subbars")
             .selectAll(".subbar").data(data.subBars[p])
             .transition().duration(500)
-            .attr("y",function(d){ return d.y}).attr("height",function(d){ return d.h});
+            .attr("y",function(d){ return d.y})
+            .attr("height",function(d){return d.h});
     }
 
     function transitionEdges(data, id){
@@ -232,7 +253,8 @@
     }
 
     function transition(data, id){
-        transitionPart(data, id, 0);
+        new_data = data
+        // transitionPart(data, id, 0);
         transitionPart(data, id, 1);
         transitionEdges(data, id);
     }
@@ -241,7 +263,8 @@
         data.forEach(function(biP,s){
             svg.append("g")
                 .attr("id", biP.id)
-                .attr("transform","translate("+ (550*s)+",0)");
+                // 修改位置
+                .attr("transform","translate("+ 250+",0)");
 
             var visData = visualize(biP.data);
             // 画出左边部分
@@ -257,10 +280,89 @@
                     .select(".mainbars")
                     .selectAll(".mainbar")
                     .on("mouseover",function(d, i){ return bP.selectSegment(data, p, i); })
-                    .on("mouseout",function(d, i){ return bP.deSelectSegment(data, p, i); });
+                    .on("mouseout",function(d, i){ return bP.deSelectSegment(svg, data, p, i); })
+                    .on("click", function(d, i) {
+                        // remove all img
+                        svg.selectAll(".img_svg").remove()
+                        bP.showImg(svg, visData, i)
+                    });
             });
         });
     }
+
+    var findMax = function(i, check_data) {
+        var selected_right = []
+        var min_val = 10
+        var min_idx = -1
+        for(var idx = 0; idx < check_data.length; idx = idx + 1) {
+            if (selected_right.length < 5) {
+                selected_right.push(idx)
+                if (check_data[idx].height < min_val) {
+                    min_val = check_data[idx].height
+                    min_idx = idx
+                }
+            } else if (check_data[idx].height > min_val) {
+                for(var j = 0; j < 5; j = j + 1) {
+                    if (selected_right[j] === min_idx) {
+                        selected_right[j] = idx
+                    }
+                }
+                min_val = 10
+                for(var j = 0; j < 5; j = j + 1) {
+                    if (check_data[selected_right[j]].height < min_val) {
+                        min_val = check_data[selected_right[j]].height
+                        min_idx = selected_right[j]
+                    }
+                }
+            }
+        }
+        return selected_right
+    }
+
+    var new_data;
+
+    bP.showImg = function(svg, visData, i) {
+        // 展示左侧的图片
+        svg.append("svg:image")
+            .attr("xlink:href", dataDir + i + ".svg")
+            .attr("id", "img_left" + i)
+            .attr("class", "img_svg")
+            .attr("width", 100)
+            .attr("height", visData.mainBars[0][i].height)
+            .attr("x", 0)
+            .attr("y", visData.mainBars[0][i].middle - visData.mainBars[0][i].height / 2);
+
+
+        var newdata;
+        data.forEach(function(k){
+            newdata =  {keys:[], data:[]};
+
+            newdata.keys = k.data.keys.map( function(d){ return d;});
+
+            newdata.data[1] = k.data.data[1].map( function(d){ return d;});
+
+            newdata.data[0] = k.data.data[0]
+                .map( function(v){ return v.map(function(d, i){ return (1==i ? d : 0);}); });
+
+            newdata = visualize(newdata)
+
+        })
+        newdata = newdata.subBars[1].slice(i * 20, i * 20 + 20)
+        var selected_right = findMax(i, newdata)
+        console.log(selected_right)
+        for(var idx = 0; idx < selected_right.length; idx++) {
+            svg.append("svg:image")
+                .attr("xlink:href", dataDir + idx + ".svg")
+                .attr("id", "img_right" + idx)
+                .attr("class", "img_svg")
+                .attr("width", 100)
+                .attr("height", new_data.subBars[1][ i * 20 + selected_right[idx]].h)
+                .attr("x", 570)
+                .attr("y", new_data.subBars[1][i * 20 + selected_right[idx]].y);
+        }
+
+    }
+
 
     bP.selectSegment = function(data, m, s){
         data.forEach(function(k){
@@ -285,7 +387,8 @@
         });
     }
 
-    bP.deSelectSegment = function(data, m, s){
+    bP.deSelectSegment = function(svg, data, m, s){
+        svg.selectAll(".img_svg").remove()
         data.forEach(function(k){
             transition(visualize(k.data), k.id);
 
