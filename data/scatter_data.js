@@ -7,3 +7,7 @@ var scatter_data = [
 
 var scatter_redis = 3
 var scatter_color = ["red", "blue", "green"]
+
+var scatter_width = 200
+var scatter_height = 200
+var scatter_line_width = 2
