@@ -16,7 +16,7 @@ right_name = ["r" + str(i) for i in range(right_size)]
 
 
 
-with open("../data.js", "w") as f:
+with open("../origin_data.js", "w") as f:
     f.write("var showData=[\n")
     for i in range(left_size):
         for j in range(right_size):

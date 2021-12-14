@@ -1,4 +1,4 @@
 .idea/*
 .vscode/*
 ./data/.ipynb_checkpoints/*
-data/data.js
+data/origin_data.js

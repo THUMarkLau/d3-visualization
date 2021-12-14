@@ -4,7 +4,7 @@
     var b=30, bb=150, height=600, buffMargin=1, minHeight=14;
     var c1=[-130, 40], c2=[-50, 100], c3=[-10, 140]; //Column positions of labels.
     var colors =["#3366FF", "#DC39FF",  "#FF9900","#109618", "#990099", "#0099C6"];
-    var dataDir = "file://D://Workspace//Datavisualize//大作业//data/";
+    var dataDir = "file:///home/marklau/Workspace/Visualization/data/";
     // 这个函数负责建立数据之间的关系
     bP.partData = function(data,p){
         var sData={};
@@ -284,13 +284,17 @@
                     .on("click", function(d, i) {
                         // remove all img
                         svg.selectAll(".img_svg").remove()
-                        bP.showImg(svg, visData, i)
+                        scatter(i)
+                        bP.showClassImg(svg, visData, i)
                     });
             });
         });
     }
 
     var findMax = function(i, check_data) {
+        /*
+            寻找被选中的类，对应的另一侧中，概率最大的五个类
+         */
         var selected_right = []
         var min_val = 10
         var min_idx = -1
@@ -321,7 +325,7 @@
 
     var new_data;
 
-    bP.showImg = function(svg, visData, i) {
+    bP.showClassImg = function(svg, visData, i) {
         // 展示左侧的图片
         svg.append("svg:image")
             .attr("xlink:href", dataDir + i + ".svg")
@@ -349,7 +353,7 @@
         })
         newdata = newdata.subBars[1].slice(i * 20, i * 20 + 20)
         var selected_right = findMax(i, newdata)
-        console.log(selected_right)
+        // 绘制右侧被选中的对应图片
         for(var idx = 0; idx < selected_right.length; idx++) {
             svg.append("svg:image")
                 .attr("xlink:href", dataDir + idx + ".svg")
@@ -362,7 +366,6 @@
         }
 
     }
-
 
     bP.selectSegment = function(data, m, s){
         data.forEach(function(k){
@@ -389,6 +392,7 @@
 
     bP.deSelectSegment = function(svg, data, m, s){
         svg.selectAll(".img_svg").remove()
+        // d3.select("body").selectAll(".point").remove()
         data.forEach(function(k){
             transition(visualize(k.data), k.id);
 
