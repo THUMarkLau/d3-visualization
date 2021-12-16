@@ -3,7 +3,7 @@
     var b=30, bb=150, height=600, buffMargin=1, minHeight=14;
     var c1=[-130, 40], c2=[-50, 100], c3=[-10, 140]; //Column positions of labels.
     var colors =["#3366FF", "#DC39FF",  "#FF9900","#109618", "#990099", "#0099C6"];
-    var dataDir = "file://C:\\Users\\MARKLAU\\Desktop\\Workspace\\d3-visualization\\data\\";
+    var dataDir = "file://D:\\Workspace\\Datavisualize\\大作业\\data\\";
     // 这个函数负责建立数据之间的关系
     bP.partData = function(data,p){
         var sData={};
@@ -73,7 +73,7 @@
         ];
 
         vis.subBars = [[],[]];
-        // 以下计算右边分支的颜色组成，以及每根线的粗细
+        // 计算每个 MainBar 下 subBar 的位置
         vis.mainBars.forEach(function(pos,p){
             pos.forEach(function(bar, i){
                 calculatePosition(data.data[p][i], bar.y, bar.y+bar.h, 0, 0).forEach(function(sBar,j){
@@ -83,6 +83,7 @@
                 });
             });
         });
+        // 对 subBar 进行排序
         vis.subBars.forEach(function(sBar){
             sBar.sort(function(a,b){
                 return (a.key1 < b.key1 ? -1 : a.key1 > b.key1 ?
@@ -209,6 +210,7 @@
         });
     }
 
+    // 绘制边，每个边就是一个梯形
     function edgePolygon(d){
         return [0, d.y1, bb, d.y2, bb, d.y2+d.h2, 0, d.y1+d.h1].join(" ");
     }
@@ -216,7 +218,7 @@
     function transitionPart(data, id, p){
         var mainbar = d3.select("#"+id).select(".part"+p).select(".mainbars")
             .selectAll(".mainbar").data(data.mainBars[p]);
-
+        //
         mainbar.select(".mainrect").transition().duration(500)
             .attr("y",function(d){ return d.middle-d.height/2;})
             .attr("height",function(d){ return d.height;});
@@ -256,7 +258,7 @@
 
     function transition(data, id){
         new_data = data
-        // transitionPart(data, id, 0);
+        transitionPart(data, id, 0);
         transitionPart(data, id, 1);
         transitionEdges(data, id);
     }
@@ -394,7 +396,8 @@
 
     }
 
-    bP.selectSegment = function(data, m, s){
+    bP.selectSegment = function(data, m, selected_id){
+        console.log(selected_id)
         data.forEach(function(k){
             var newdata =  {keys:[], data:[]};
 
@@ -402,13 +405,14 @@
 
             newdata.data[m] = k.data.data[m].map( function(d){ return d;});
 
+            // 对另一侧的值进行计算，如果不在 selected_id 中，值就会被设置为 0
             newdata.data[1-m] = k.data.data[1-m]
-                .map( function(v){ return v.map(function(d, i){ return (s==i ? d : 0);}); });
+                .map( function(v){ return v.map(function(d, i){ return (selected_id==i ? d : 0);}); });
 
             transition(visualize(newdata), k.id);
 
             var selectedBar = d3.select("#"+k.id).select(".part"+m).select(".mainbars")
-                .selectAll(".mainbar").filter(function(d,i){ return (i==s);});
+                .selectAll(".mainbar").filter(function(d,i){ return (i==selected_id);});
 
             selectedBar.select(".mainrect").style("stroke-opacity",1);
             selectedBar.select(".barlabel").style('font-weight','bold');
