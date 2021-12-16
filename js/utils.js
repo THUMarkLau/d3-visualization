@@ -1,10 +1,9 @@
 !function(){
-    console.log("test");
     var bP={};
     var b=30, bb=150, height=600, buffMargin=1, minHeight=14;
     var c1=[-130, 40], c2=[-50, 100], c3=[-10, 140]; //Column positions of labels.
     var colors =["#3366FF", "#DC39FF",  "#FF9900","#109618", "#990099", "#0099C6"];
-    var dataDir = "file:///home/marklau/Workspace/Visualization/data/";
+    var dataDir = "file://C:\\Users\\MARKLAU\\Desktop\\Workspace\\d3-visualization\\data\\";
     // 这个函数负责建立数据之间的关系
     bP.partData = function(data,p){
         var sData={};
@@ -112,6 +111,7 @@
         };
     }
 
+    // 绘制两边的数据
     function drawPart(data, id, p){
         d3.select("#"+id).append("g").attr("class","part"+p)
             .attr("transform","translate("+( p*(bb+b))+",0)");
@@ -178,6 +178,7 @@
             .style("fill",function(d){ return colors[d.key1];});
     }
 
+    // 绘制中间的连线
     function drawEdges(data, id){
         d3.select("#"+id).append("g").attr("class","edges").attr("transform","translate("+ b+",0)");
 
@@ -187,6 +188,7 @@
             .style("opacity",0.5).each(function(d) { this._current = d; });
     }
 
+    // 绘制顶部的文字
     function drawHeader(header, id){
         d3.select("#"+id).append("g").attr("class","header").append("text").text(header[2])
             .style("font-size","20").attr("x",108).attr("y",-20).style("text-anchor","middle")
@@ -260,11 +262,13 @@
     }
 
     bP.draw = function(data, svg){
+        d3.select("body").select("svg").select("#mainFrame").attr("keep", "0")
         data.forEach(function(biP,s){
             svg.append("g")
                 .attr("id", biP.id)
                 // 修改位置
                 .attr("transform","translate("+ 250+",0)");
+
 
             var visData = visualize(biP.data);
             // 画出左边部分
@@ -279,13 +283,36 @@
                     .select(".part"+p)
                     .select(".mainbars")
                     .selectAll(".mainbar")
-                    .on("mouseover",function(d, i){ return bP.selectSegment(data, p, i); })
-                    .on("mouseout",function(d, i){ return bP.deSelectSegment(svg, data, p, i); })
+                    .on("mouseover",function(d, i){
+                        var mainFrame = d3.select("body").select("svg").select("#mainFrame");
+                        var keep = mainFrame.attr("keep");
+                        if (keep === "0") {
+                            return bP.selectSegment(data, p, i);
+                        }
+                    })
+                    .on("mouseout",function(d, i){
+                        var mainFrame = d3.select("body").select("svg").select("#mainFrame");
+                        var keep = mainFrame.attr("keep");
+                        if (keep === "0") {
+                            return bP.deSelectSegment(svg, data, p, i);
+                        }
+                    })
                     .on("click", function(d, i) {
-                        // remove all img
-                        svg.selectAll(".img_svg").remove()
-                        scatter(i)
-                        bP.showClassImg(svg, visData, i)
+                        var keep = d3.select(this).attr("keep");
+                        var global_keep = d3.select("body").select("svg").select("#mainFrame").attr("keep");
+                        if (keep === "0" || keep === null) {
+                            if (global_keep === "0") {
+                                d3.select(this).attr("keep", "1")
+                                d3.select("body").select("svg").select("#mainFrame").attr("keep", "1")
+                                // remove all img
+                                svg.selectAll(".img_svg").remove()
+                                scatter(i)
+                                bP.showClassImg(svg, visData, i)
+                            }
+                        } else if (keep === "1") {
+                            d3.select(this).attr("keep", "0")
+                            d3.select("body").select("svg").select("#mainFrame").attr("keep", "0")
+                        }
                     });
             });
         });
@@ -392,6 +419,8 @@
 
     bP.deSelectSegment = function(svg, data, m, s){
         svg.selectAll(".img_svg").remove()
+        d3.select(".scatter").remove()
+        d3.select(".chart").remove()
         // d3.select("body").selectAll(".point").remove()
         data.forEach(function(k){
             transition(visualize(k.data), k.id);
