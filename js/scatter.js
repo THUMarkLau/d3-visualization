@@ -1,76 +1,84 @@
-function scatter(idx) {
-    d3.select("body").select("svg").select(".scatter").remove()
+function scatter(origin_x, origin_y, data, p, rate) {
+    // d3.select("body").select("svg").select(".scatter").remove()
     var g = d3.select("body").select("svg")
         .append("g")
-        .attr("transform", "translate(" + (margin.l+800) + "," + margin.t + ")")
-        .attr("class", "scatter");
-
-    var to_scatter_data = scatter_data[idx]
-    for (var i = 0; i < to_scatter_data.length; i++) {
-        var cluster_data = to_scatter_data[i];
-        g.selectAll(".point-" + i)
-            .data(cluster_data)
-            .enter()
-            .append("circle")
-            .attr("cx", function (d, i) {
-                return d[0] + scatter_redis
-            })
-            .attr("cy", function (d, i) {
-                console.log(scatter_height - d[1] - scatter_redis)
-                return scatter_height - d[1] - scatter_redis
-            })
-            .attr("r", scatter_redis)
-            .attr("fill", scatter_color[i])
-            .attr("class", "point-" + i + " point")
-            .attr("cluster-id", i)
-            .attr("class-id", idx)
-            .on("click", function (d, i) {
-                chart(parseInt(d3.select(this).attr("class-id")), parseInt(d3.select(this).attr("cluster-id")));
-            })
-            .on("bclick", function () {
-                console.log("test")
-            })
-    }
-    drawAxis(g, [0, scatter_height],scatter_height, scatter_width)
+        .attr("transform", "translate(" + (origin_x - scatter_width / 2) + "," + (origin_y - scatter_height / 2) + ")")
+        .attr("class", "scatter")
+        .attr("id", "scatter-" + p);
+    g.append("rect")
+        .attr("x", 0)
+        .attr("y", -5)
+        .attr("width", scatter_width + 5)
+        .attr("height", scatter_height + 5)
+        .style("stroke", "black")
+        .style("fill", "white")
+    drawAxis(g, [scatter_width / 2, scatter_height / 2], scatter_height, scatter_width)
+    var to_scatter_data = []
+    data.scatter_color.map(function (d, i) {
+        to_scatter_data[i] = {}
+        to_scatter_data[i].color = d
+        to_scatter_data[i].label = data.scatter_label[i]
+        if (p === 0) {
+            to_scatter_data[i].x = data.scatter_data[i][0] + scatter_1_x_bias
+        } else {
+            to_scatter_data[i].x = data.scatter_data[i][0]
+        }
+        to_scatter_data[i].x *= rate
+        to_scatter_data[i].y = data.scatter_data[i][1] * rate
+    })
+    // console.log(to_scatter_data)
+    g.selectAll(".scatter-point-" + p).data(to_scatter_data).enter().append("circle")
+        .attr("cx", function (d) {
+            return d.x + scatter_width / 2
+        })
+        .attr("cy", function (d) {
+            return -d.y + scatter_height / 2
+        })
+        .attr("r", scatter_redis)
+        .attr("class-id", function (d) {
+            return d.label
+        })
+        .attr("fill", function (d) {
+            return d.color
+        })
+        .attr("id", function (d) {
+            return "circle-" + p + "-" + d.label
+        })
+        .attr("class", "scatter-point-" + p)
 }
 
 function drawAxis(g, origin, height, width) {
     var defs = g.append("defs")
     var arrow_marker = defs.append("marker")
-        .attr("id","arrow")
-        .attr("markerUnits","strokeWidth")
-        .attr("markerWidth",9)
-        .attr("markerHeight",9)
-        .attr("viewBox","0 0 12 12")
-        .attr("refX",6)
-        .attr("refY",6)
-        .attr("orient","auto")
+        .attr("id", "arrow")
+        .attr("markerUnits", "strokeWidth")
+        .attr("markerWidth", 9)
+        .attr("markerHeight", 9)
+        .attr("viewBox", "0 0 12 12")
+        .attr("refX", 6)
+        .attr("refY", 6)
+        .attr("orient", "auto")
 
     var arrow_path = "M2,2 L10,6 L2,10 L6,6 L2,2";
     arrow_marker.append("path")
-        .attr("d",arrow_path)
-        .attr("fill","#000")
+        .attr("d", arrow_path)
+        .attr("fill", "#000")
     // y 轴
     g.append("line")
         .attr("x1", origin[0])
-        .attr("y1", origin[1])
+        .attr("y1", origin[1] + height / 2)
         .attr("x2", origin[0])
-        .attr("y2", origin[1] - height)
-        .attr("marker-end","url(#arrow)")
+        .attr("y2", origin[1] - height / 2)
+        .attr("marker-end", "url(#arrow)")
         .style("stroke-width", scatter_line_width)
         .style("stroke", "black")
     // x 轴
     g.append("line")
-        .attr("x1", origin[0])
+        .attr("x1", origin[0] - width / 2)
         .attr("y1", origin[1])
-        .attr("x2", origin[0] + width)
+        .attr("x2", origin[0] + width / 2)
         .attr("y2", origin[1])
-        .attr("marker-end","url(#arrow)")
+        .attr("marker-end", "url(#arrow)")
         .style("stroke-width", scatter_line_width)
         .style("stroke", "black")
-    g.append("text")
-        .attr("x", origin[0])
-        .attr("y", origin[1] + 15)
-        .text("O")
-        .style("font-weight", "bold")
 }

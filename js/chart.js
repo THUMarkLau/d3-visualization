@@ -37,3 +37,46 @@ function chart(class_id, cluster_id) {
         .attr('fill', 'none');
 
 }
+
+function drawChart(p, classIdx) {
+    var data_path = "./data/json/"
+    if (p === 0) {
+        data_path += "cub200-contour/"
+    } else {
+        data_path += "ImageNet1K-contour/"
+    }
+    data_path += "class" + classIdx + ".json"
+    d3.json(data_path, function (error, data) {
+        if (error == null) {
+            var to_chart_data = []
+            data.contour_color.map(function (d, i) {
+                to_chart_data[i] = {}
+                to_chart_data[i].color = d
+                var points = []
+                data.contour_data[i].map(function (d, i) {
+                    if (p === 1) {
+                        points[2 * i] = (d[0] + scatter_1_x_bias) * scatter_1_rate
+                        points[2 * i + 1] = d[1] * scatter_1_rate
+                    } else {
+                        points[2 * i] = d[0] * scatter_2_rate
+                        points[2 * i + 1] = d[1] * scatter_2_rate
+                    }
+                    points[2 * i] = points[2 * i] + scatter_width / 2
+                    points[2 * i + 1] = -points[2 * i + 1] + scatter_height / 2
+                })
+                to_chart_data[i].path = points.join(" ")
+            })
+            var g = d3.select("#scatter-" + (1 - p))
+            g.selectAll(".scatter-path").data(to_chart_data).enter().append("polygon")
+                .attr("points", function (d) {
+                    return d.path
+                })
+                .attr("fill-opacity", "0")
+                .style("stroke", function (d, i) {
+                    return d.color
+                })
+                .style("stroke-opacity", 1)
+                .style("stroke-width", 2)
+        }
+    })
+}

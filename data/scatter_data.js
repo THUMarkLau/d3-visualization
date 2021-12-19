@@ -5,9 +5,12 @@ var scatter_data = [
         [[90, 90], [101, 80], [70, 70], [120, 92], [78, 92]]],
 ]
 
-var scatter_redis = 3
+var scatter_redis = 2
 var scatter_color = ["red", "blue", "green"]
 
-var scatter_width = 200
+var scatter_width = 300
 var scatter_height = 200
 var scatter_line_width = 2
+var scatter_1_rate = 4
+var scatter_1_x_bias = 20
+var scatter_2_rate = 2
